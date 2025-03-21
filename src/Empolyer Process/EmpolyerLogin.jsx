@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 
-const CandidateLogin = () => {
+const EmployerLogin = () => {
   const [formData, setFormData] = useState({
     identifier: "",
     password: "",
@@ -23,42 +23,60 @@ const CandidateLogin = () => {
     setLoading(true);
     setMessage("");
 
+    // Clear localStorage before login attempt
     localStorage.clear();
-    console.log("LocalStorage cleared");
+
+    // Basic validation for identifier (email or phone)
+    const isEmail = formData.identifier.includes("@");
+    const isPhone = /^\d{10}$/.test(formData.identifier); // Check for 10-digit phone number
+    if (!isEmail && !isPhone) {
+      setMessage("Please enter a valid email or 10-digit phone number");
+      setLoading(false);
+      return;
+    }
 
     try {
-      console.log("Sending login request with:", formData);
+      console.log("Submitting login with:", formData); // Debug log
+
       const response = await axios.post(
-        "https://jobportalapi.up.railway.app/api/login", // Correct endpoint
+        "https://jobportalapi.up.railway.app/api/employer/login",
         formData,
         {
           headers: { "Content-Type": "application/json" },
         }
       );
 
-      console.log("Login Response:", response.data);
+      console.log("Response from server:", response.data); // Debug log
 
-      // Store token, user_id, and role with correct keys
-      localStorage.setItem("token", response.data.token); // Fixed to "token"
+      // Validate response structure
+      if (!response.data.employertoken || !response.data.user_id || !response.data.employer) {
+        throw new Error("Invalid response from server");
+      }
+
+      // Store token, user_id, and role
+      localStorage.setItem("employertoken", response.data.employertoken);
       localStorage.setItem("user_id", response.data.user_id);
-      localStorage.setItem("role", response.data.user.role);
-      console.log("Stored in localStorage:", {
-        token: response.data.token,
-        user_id: response.data.user_id,
-        role: response.data.user.role,
-      });
+      localStorage.setItem("role", response.data.employer.role);
 
-      if (response.data.user.role === "candidate") {
-        console.log("Role is candidate, navigating to /profile");
-        navigate("/profile"); // Or "/dashboard" if preferred
+      console.log("Stored in localStorage:", {
+        employertoken: response.data.employertoken,
+        user_id: response.data.user_id,
+        role: response.data.employer.role,
+      }); // Debug log
+
+      // Check role and redirect
+      if (response.data.employer.role === "employer") {
+        navigate("/employer-dashboard");
       } else {
-        console.log("Role is not candidate:", response.data.user.role);
-        setMessage("Please use employer login for employer accounts");
+        setMessage("This account is not registered as an employer. Use candidate login if applicable.");
         localStorage.clear();
       }
     } catch (error) {
-      console.error("Login error:", error.response?.data || error.message);
-      setMessage(error.response?.data?.error || "Login failed");
+      console.error("Login error:", error.response?.data || error.message); // Debug log
+      setMessage(
+        error.response?.data?.error ||
+          "Login failed. Please check your credentials or ensure this is an employer account."
+      );
     }
 
     setLoading(false);
@@ -68,19 +86,19 @@ const CandidateLogin = () => {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-12 mt-[-70px]">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md border border-gray-200">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-2">
-          Candidate Sign In
+          Employer Sign In
         </h2>
         <p className="text-center text-gray-600 text-sm mb-6">
           New to Indeed?{" "}
           <Link
-            to="/signup"
+            to="/employer-signup"
             className="text-indigo-600 hover:underline font-medium"
           >
             Create an Account
           </Link>{" "}
           |{" "}
-          <Link to="/employer-login" className="text-indigo-600 hover:underline font-medium">
-            Employer Login
+          <Link to="/login" className="text-indigo-600 hover:underline font-medium">
+            Candidate Login
           </Link>
         </p>
 
@@ -174,7 +192,7 @@ const CandidateLogin = () => {
 
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200"></div>
+            <div className="w-full border-t border-gray-300"></div>
           </div>
           <div className="relative flex justify-center text-sm">
             <span className="px-2 bg-white text-gray-500">Or continue with</span>
@@ -196,4 +214,4 @@ const CandidateLogin = () => {
   );
 };
 
-export default CandidateLogin;
+export default EmployerLogin;
