@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback, memo, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { SearchIcon, XIcon, CheckCircleIcon, BriefcaseIcon } from "../assets/Icons";
+import { SearchIcon, XIcon, BriefcaseIcon } from "../assets/Icons";
 import JobCard from "./JobCard";
-import JobDetails from "./JobDeatils";
+import JobDetails from "./JobDeatils"; // Fixed typo
 import { formatField } from "../FilterComponentForMobile.jsx/Utils";
 import { useLoader } from "../pages/LoaderContext";
 import DesktopFilters from "../FilterComponentForMobile.jsx/DesktopFilters";
@@ -20,6 +20,9 @@ const DesktopJobs = () => {
   const [error, setError] = useState("");
   const [searchTitle, setSearchTitle] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [locationQuery, setLocationQuery] = useState(""); // City search input
+  const [citySuggestions, setCitySuggestions] = useState([]); // City suggestions
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false); // Toggle suggestions
   const [filterType, setFilterType] = useState("");
   const [sortSalary, setSortSalary] = useState("");
   const [filterExperience, setFilterExperience] = useState("");
@@ -67,6 +70,7 @@ const DesktopJobs = () => {
     setHiringMultipleFilter(filters.hiringMultipleFilter || "");
     setUrgentHiringFilter(filters.urgentHiringFilter || "");
     setJobPriorityFilter(filters.jobPriorityFilter || "");
+    setLocationQuery(filters.cityFilter || ""); // Initialize city search input
   }, [location.state]);
 
   const fetchJobs = async () => {
@@ -118,6 +122,44 @@ const DesktopJobs = () => {
     const maxVal = parseFloat(max) || minVal;
     return { min: minVal, max: Math.max(minVal, maxVal) };
   }, []);
+
+  const handleCitySearch = async (e) => {
+    const name = e.target.value;
+    setLocationQuery(name); // Update location query
+    if (name.length > 0) {
+      setIsLoading(true);
+      try {
+        const response = await axios.get(`${API_BASE_URL}/cities?name=${name}`);
+        setCitySuggestions(response.data.data);
+        setShowCitySuggestions(true);
+      } catch (error) {
+        setError("Unable to fetch cities.");
+        setCitySuggestions([]);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      setCitySuggestions([]);
+      setShowCitySuggestions(false);
+      setCityFilter(""); // Clear filter when input is empty
+    }
+  };
+
+  const handleCitySuggestionClick = (city) => {
+    setLocationQuery(city.name); // Use city name
+    setCityFilter(city.name); // Set filter
+    setCitySuggestions([]);
+    setShowCitySuggestions(false);
+    setCurrentPage(1); // Reset to first page
+  };
+
+  const handleClearCitySearch = () => {
+    setLocationQuery("");
+    setCityFilter("");
+    setCitySuggestions([]);
+    setShowCitySuggestions(false);
+    setCurrentPage(1);
+  };
 
   const filterAndSortJobs = useCallback(() => {
     setManualLoading(true);
@@ -182,7 +224,7 @@ const DesktopJobs = () => {
         setTimeout(() => {
           setIsJobDetailsLoading(false);
           if (jobDetailsRef.current) {
-            const offset = -50; // Adjusted for better visibility
+            const offset = -50;
             const top = jobDetailsRef.current.getBoundingClientRect().top + window.scrollY + offset;
             window.scrollTo({
               top,
@@ -191,12 +233,12 @@ const DesktopJobs = () => {
           }
         }, 100);
       } else if (filtered.length === 0) {
-        setSelectedJobId(null); // Clear selection if no jobs match
+        setSelectedJobId(null);
       }
 
       setIsSearching(false);
       setManualLoading(false);
-    }, 500); // Reduced delay for faster response
+    }, 500);
   }, [
     allJobs,
     searchQuery,
@@ -338,6 +380,8 @@ const DesktopJobs = () => {
   const handleResetFilters = () => {
     setSearchTitle("");
     setSearchQuery("");
+    setLocationQuery(""); // Clear city search
+    setCityFilter("");
     setFilterType("");
     setSortSalary("");
     setFilterExperience("");
@@ -347,7 +391,8 @@ const DesktopJobs = () => {
     setDatePosted("");
     setCompanySize("");
     setSkillsFilter("");
-    setCityFilter("");
+    setCitySuggestions([]);
+    setShowCitySuggestions(false);
     setJobRoleFilter("");
     setHiringMultipleFilter("");
     setUrgentHiringFilter("");
@@ -387,15 +432,6 @@ const DesktopJobs = () => {
     );
   };
 
-  const handleMobileNumberSubmit = () => {
-    if (!/^\d{10}$/.test(mobileNumber)) {
-      alert("Please enter a valid 10-digit mobile number.");
-      return;
-    }
-    alert(`App link sent to ${mobileNumber}`);
-    setMobileNumber("");
-  };
-
   const handleNextPage = () => {
     const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
     if (currentPage < totalPages) {
@@ -433,65 +469,122 @@ const DesktopJobs = () => {
     <div className="min-h-screen bg-gray-50 font-inter flex flex-col hidden md:block">
       <header className="bg-white shadow-md p-2 md:p-3 lg:p-4 sticky top-0 left-0 z-10 border-b border-gray-200 w-full">
         <div className="w-full mx-auto px-2 md:px-4 lg:px-6">
-          <div className="flex flex-row items-center justify-center gap-2 md:gap-3 lg:gap-4">
-            <div className="relative flex-grow-0 w-full max-w-md md:max-w-lg lg:max-w-xl">
-              <div className="flex items-center">
-                <div className="relative flex-grow">
-                  <input
-                    type="text"
-                    placeholder="Search jobs here"
-                    value={searchTitle}
-                    onChange={(e) => setSearchTitle(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    className="w-full p-1.5 md:p-2 lg:p-2.5 pl-8 md:pl-9 lg:pl-10 pr-8 md:pr-9 lg:pr-10 border border-gray-300 rounded-l-md bg-white shadow-sm focus:ring-1 focus:ring-[#008080] focus:border-[#008080] text-xs md:text-sm lg:text-base text-gray-500 placeholder-gray-400 outline-none transition-all"
-                  />
-                  <svg
-                    className="absolute left-2 md:left-2.5 lg:left-3 top-1/2 transform -translate-y-1/2 w-4 md:w-5 lg:w-5 h-4 md:h-5 lg:h-5 text-gray-200"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  {searchTitle && (
-                    <button
-                      onClick={handleClearSearch}
-                      className="absolute right-2 md:right-2.5 lg:right-3 top-1/2 transform -translate-y-1/2 w-4 md:w-5 lg:w-5 h-4 md:h-5 lg:h-5 text-gray-500 hover:text-gray-700"
-                    >
-                      <svg
-                        className="w-4 md:w-5 lg:w-5 h-4 md:h-5 lg:h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  )}
-                  {suggestions.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-b-md shadow-lg z-10 max-h-48 md:max-h-60 overflow-y-auto">
-                      {suggestions.map((suggestion, index) => (
-                        <div
-                          key={index}
-                          onClick={() => handleSuggestionClick(suggestion)}
-                          className="px-2 md:px-3 lg:px-4 py-1 md:py-2 text-xs md:text-sm lg:text-base text-gray-700 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {suggestion}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={handleSearch}
-                  className="p-1.5 md:p-2 lg:p-2.5 bg-white text-white rounded-r-md shadow-sm hover:bg-gray-100 transition-colors relative"
-                  disabled={isSearching}
+          <div className="flex flex-row justify-center gap-2 md:gap-3 lg:gap-4">
+            {/* Job Title Search */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-grow">
+                <input
+                  type="text"
+                  placeholder="Search jobs here"
+                  value={searchTitle}
+                  onChange={(e) => setSearchTitle(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  className="w-full p-1.5 md:p-2 lg:p-2.5 pl-8 md:pl-9 lg:pl-10 pr-8 md:pr-9 lg:pr-10 border border-gray-300 rounded-l-md bg-white shadow-sm focus:ring-1 focus:ring-[#008080] focus:border-[#008080] text-xs md:text-sm lg:text-base text-gray-500 placeholder-gray-400 outline-none transition-all"
+                />
+                <svg
+                  className="absolute left-2 md:left-2.5 lg:left-3 top-1/2 transform -translate-y-1/2 w-4 md:w-5 lg:w-5 h-4 md:h-5 lg:h-5 text-black"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  {isSearching ? <Loader /> : <SearchIcon />}
-                </button>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                {searchTitle && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="absolute right-2 md:right-2.5 lg:right-3 top-1/2 transform -translate-y-1/2 w-4 md:w-5 lg:w-5 h-4 md:h-5 lg:h-5 text-gray-600 hover:text-gray-700"
+                  >
+                    <svg
+                      className="w-4 md:w-5 lg:w-5 h-4 md:h-5 lg:h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+                {suggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-b-md shadow-lg z-10 max-h-48 md:max-h-60 overflow-y-auto">
+                    {suggestions.map((suggestion, index) => (
+                      <div
+                        key={index}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="px-2 md:px-3 lg:px-4 py-1 md:py-2 text-xs md:text-sm lg:text-base text-gray-700 hover:bg-gray-100 cursor-pointer"
+                      >
+                        {suggestion}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
+              <button
+                onClick={handleSearch}
+                className="p-1.5 md:p-2 lg:p-2.5 bg-white text-white rounded-r-md shadow-sm hover:bg-gray-100 transition-colors relative"
+                disabled={isSearching}
+              >
+                {isSearching ? <Loader /> : <SearchIcon />}
+              </button>
+            </div>
+
+            {/* City Search */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-grow">
+                <input
+                  type="text"
+                  placeholder="Search city"
+                  value={locationQuery}
+                  onChange={handleCitySearch}
+                  className="w-full p-1.5 md:p-2 lg:p-2.5 pl-8 md:pl-9 lg:pl-10 pr-8 md:pr-9 lg:pr-10 border border-gray-300 rounded-l-md bg-white shadow-sm focus:ring-1 focus:ring-[#008080] focus:border-[#008080] text-xs md:text-sm lg:text-base text-gray-500 placeholder-gray-400 outline-none transition-all"
+                />
+                <svg
+                  className="absolute left-2 md:left-2.5 lg:left-3 top-1/2 transform -translate-y-1/2 w-4 md:w-5 lg:w-5 h-4 md:h-5 lg:h-5 text-black"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                {locationQuery && (
+                  <button
+                    onClick={handleClearCitySearch}
+                    className="absolute right-2 md:right-2.5 lg:right-3 top-1/2 transform -translate-y-1/2 w-4 md:w-5 lg:w-5 h-4 md:h-5 lg:h-5 text-gray-500 hover:text-gray-700"
+                  >
+                    <svg
+                      className="w-4 md:w-5 lg:w-5 h-4 md:h-5 lg:h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+                {showCitySuggestions && citySuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-b-md shadow-lg z-10 max-h-48 md:max-h-60 overflow-y-auto">
+                    {citySuggestions.map((city, index) => (
+                      <div
+                        key={index}
+                        onClick={() => handleCitySuggestionClick(city)}
+                        className="px-2 md:px-3 lg:px-4 py-1 md:py-2 text-xs md:text-sm lg:text-base text-gray-700 hover:bg-gray-100 cursor-pointer"
+                      >
+                        {city.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                className="p-1.5 md:p-2 lg:p-2.5 bg-white text-white rounded-r-md shadow-sm hover:bg-gray-100 transition-colors relative"
+                disabled={isSearching}
+              >
+                {isSearching ? <Loader /> : <SearchIcon />}
+              </button>
             </div>
           </div>
         </div>
@@ -571,7 +664,7 @@ const DesktopJobs = () => {
                         sortSalary === "desc" &&
                         filteredJobs.slice(0, 3).some((topJob) => topJob.id === job.id)
                       }
-                      isSelected={job.id === selectedJobId} // Highlight selected job
+                      isSelected={job.id === selectedJobId}
                     />
                   </motion.div>
                 ))

@@ -6,6 +6,7 @@ import Loader from "../pages/Loader";
 import DOMPurify from "dompurify";
 import parse from "html-react-parser";
 import { motion, AnimatePresence } from "framer-motion";
+import useIsMobile from "../Hooks/useIsMobile";
 import {
   BookmarkIcon,
   ShareIcon,
@@ -66,10 +67,21 @@ const JobDetailsMobile = ({
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [hasNavigated, setHasNavigated] = useState(false); // Prevent infinite navigation
 
   const API_BASE_URL = "http://localhost:5000";
-  const isDesktop = useMediaQuery("(min-width: 800px)");
+  const isDesktop = useMediaQuery("(min-width: 1024px)"); // Aligned with 1024px
+  const isMobile = useIsMobile();
   const token = localStorage.getItem("token");
+
+  // Handle screen size change
+  useEffect(() => {
+    if (!isMobile && !hasNavigated && job?.id) {
+      setHasNavigated(true);
+      console.log("Navigating to /jobs due to screen size ≥1024px");
+      navigate("/jobs", { replace: true });
+    }
+  }, [isMobile, navigate, job?.id, hasNavigated]);
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -190,44 +202,46 @@ const JobDetailsMobile = ({
     <div className="min-h-screen bg-gray-100 font-sans">
       {/* Sticky Header */}
       <header className="fixed top-0 left-0 right-0 bg-white shadow-md p-4 z-50">
-        <div className="flex justify-between items-center max-w-6xl mx-auto px-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-700 hover:text-teal-600 transition-colors"
-          >
-            <ArrowLeftIcon className="w-6 h-6" />
-            <span className="text-lg font-medium">Back</span>
-          </button>
-          <div className="flex gap-3">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex justify-between items-center">
             <button
-              onClick={handleSave}
-              className={`p-2 rounded-full transition-colors ${
-                isSaved ? "bg-teal-600 text-white" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-              }`}
-              title={isSaved ? "Unsave Job" : "Save Job"}
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-gray-700 hover:text-teal-600 transition-colors"
             >
-              <BookmarkIcon className="w-6 h-6" />
+              <ArrowLeftIcon className="w-6 h-6" />
+              <span className="text-lg font-medium">Back</span>
             </button>
-            <div className="relative">
+            <div className="flex gap-3">
               <button
-                onClick={handleShare}
-                className="p-2 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition-colors"
-                title="Share Job"
+                onClick={handleSave}
+                className={`p-2 rounded-full transition-colors ${
+                  isSaved ? "bg-teal-600 text-white" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                }`}
+                title={isSaved ? "Unsave Job" : "Save Job"}
               >
-                <ShareIcon className="w-6 h-6" />
+                <BookmarkIcon className="w-6 h-6" />
               </button>
-              {shareTooltip && (
-                <div className="absolute top-12 right-0 bg-gray-800 text-white text-xs rounded px-2 py-1 shadow-lg">
-                  Link copied!
-                </div>
-              )}
+              <div className="relative">
+                <button
+                  onClick={handleShare}
+                  className="p-2 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition-colors"
+                  title="Share Job"
+                >
+                  <ShareIcon className="w-6 h-6" />
+                </button>
+                {shareTooltip && (
+                  <div className="absolute top-12 right-0 bg-gray-800 text-white text-xs rounded px-2 py-1 shadow-lg">
+                    Link copied!
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="pt-20 pb-24 px-4 max-w-6xl mx-auto">
+      <main className="pt-16 pb-24 px-4 max-w-6xl mx-auto">
         <div className="lg:flex lg:gap-6">
           {/* Left Column (Job Details) */}
           <div className="lg:flex-1">
@@ -464,6 +478,16 @@ const JobDetailsMobile = ({
               }`}
             >
               {actionFeedback.message}
+            </motion.div>
+          )}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="fixed top-20 left-1/2 transform -translate-x-1/2 max-w-md w-full p-4 rounded-lg shadow-lg text-sm z-50 bg-red-100 text-red-800 border border-red-300"
+            >
+              {error}
             </motion.div>
           )}
         </AnimatePresence>

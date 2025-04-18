@@ -87,7 +87,7 @@ const FilterPage = () => {
       <div>
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
-            <button onClick={() => navigate("/")} aria-label="Go back">
+            <button onClick={() => navigate("/jobs")} aria-label="Go back">
               <BackArrowIcon />
             </button>
             <h3 className="text-lg font-semibold text-gray-900">Filter</h3>
