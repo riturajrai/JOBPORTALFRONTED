@@ -1,8 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
-import { FcGoogle } from "react-icons/fc";
-import { FaGithub } from "react-icons/fa";
+import {
+  FaUser,
+  FaEnvelope,
+  FaPhone,
+  FaLock,
+  FaBuilding,
+  FaIndustry,
+  FaUsers,
+  FaEye,
+  FaEyeSlash,
+} from "react-icons/fa";
 
 const EmployerSignup = () => {
   const [formData, setFormData] = useState({
@@ -14,25 +23,85 @@ const EmployerSignup = () => {
     industry: "",
     companySize: "",
   });
+
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [industrySuggestions, setIndustrySuggestions] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isIndustryFocused, setIsIndustryFocused] = useState(false);
+  const industryInputRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(""), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+
+  useEffect(() => {
+    const fetchIndustries = async () => {
+      if (!formData.industry.trim()) {
+        setIndustrySuggestions([]);
+        setIsSearching(false);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const response = await axios.get(
+          `http://localhost:5000/api/industry?name=${encodeURIComponent(formData.industry)}`
+        );
+
+        const filteredSuggestions = (response.data.data || [])
+          .filter((suggestion) =>
+            suggestion.name.toLowerCase().includes(formData.industry.toLowerCase())
+          )
+          .sort((a, b) => {
+            const aMatches = (a.name.toLowerCase().match(new RegExp(formData.industry.toLowerCase(), "g")) || []).length;
+            const bMatches = (b.name.toLowerCase().match(new RegExp(formData.industry.toLowerCase(), "g")) || []).length;
+            return bMatches - aMatches || a.name.length - b.name.length;
+          });
+
+        setIndustrySuggestions(filteredSuggestions);
+      } catch (error) {
+        console.error("Error fetching industries:", error);
+        setMessage("Error fetching industries");
+        setIndustrySuggestions([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const debounce = setTimeout(fetchIndustries, 300);
+    return () => clearTimeout(debounce);
+  }, [formData.industry]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setMessage("");
   };
 
+  const handleSelectIndustry = (industry) => {
+    setFormData((prev) => ({ ...prev, industry }));
+    setIndustrySuggestions([]);
+    setIsIndustryFocused(false);
+    if (industryInputRef.current) {
+      industryInputRef.current.blur();
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
-
     try {
-      const response = await axios.post("https://jobportalapi.up.railway.app/api/employer/signup", formData);
-      setMessage(response.data.message || "Signup successful! Please log in.");
-
-      // Clear form
+      const response = await axios.post(
+        "http://localhost:5000/api/employer/signup",
+        formData
+      );
+      setMessage(response.data.message || "Signup successful! Redirecting...");
       setFormData({
         name: "",
         email: "",
@@ -42,206 +111,273 @@ const EmployerSignup = () => {
         industry: "",
         companySize: "",
       });
-
-      // Redirect to login page after signup
-      setTimeout(() => {
-        navigate("/employer-login");
-      }, 2000); // Delay of 2 seconds to show success message
+      setTimeout(() => navigate("/employer-login"), 1500);
     } catch (error) {
-      console.error("Signup error:", error.response);
-      setMessage(error.response?.data?.error || "Signup failed");
+      setMessage(
+        error.response?.data?.error || "Signup failed. Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
+  const isEmailValid = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isPhoneValid = (phone) => /^[6-9]\d{9}$/.test(phone);
+  const isFormValid = () =>
+    formData.name &&
+    isEmailValid(formData.email) &&
+    isPhoneValid(formData.phone) &&
+    formData.password.length >= 6 &&
+    formData.companyName &&
+    formData.industry &&
+    formData.companySize;
+
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-12 mt-[-55px]">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-lg border border-gray-200">
-        <h2 className="text-3xl font-extrabold text-center text-gray-800 mb-2">
-          Employer Sign Up
-        </h2>
-        <p className="text-center text-gray-600 text-sm mb-8">
-          Already have an account?{" "}
-          <Link to="/employer-login" className="text-indigo-600 hover:underline font-medium">
-            Sign In
-          </Link>{" "}
-          |{" "}
-          <Link to="/signup" className="text-indigo-600 hover:underline font-medium">
-            Candidate Signup
-          </Link>
-        </p>
-
-        {message && (
-          <p
-            className={`text-center text-sm mb-6 font-medium ${
-              message.includes("success") ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {message}
-          </p>
-        )}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Full Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Enter your full name"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="Enter your phone number (10 digits)"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Create a password"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Company Name
-            </label>
-            <input
-              type="text"
-              name="companyName"
-              value={formData.companyName}
-              onChange={handleChange}
-              placeholder="Enter your company name"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Industry
-            </label>
-            <input
-              type="text"
-              name="industry"
-              value={formData.industry}
-              onChange={handleChange}
-              placeholder="Enter your industry"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Company Size
-            </label>
-            <select
-              name="companySize"
-              value={formData.companySize}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700"
-              required
+    <div className="min-h-screen bg-[#f2f2f2] font-sans pt-16">
+      {/* Navbar */}
+      <nav className="bg-white shadow-sm fixed top-0 left-0 w-full z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <Link to="/" className="text-xl sm:text-2xl font-bold text-[#008080]">
+              JobLeaaye
+            </Link>
+            <Link
+              to="/employer-login"
+              className="bg-[#008080] text-white px-4 py-2 rounded-md text-sm sm:text-base font-medium"
+              aria-label="Go to employer login"
             >
-              <option value="">Select company size</option>
-              <option value="1-10">1-10 employees</option>
-              <option value="11-50">11-50 employees</option>
-              <option value="51-200">51-200 employees</option>
-              <option value="201-500">201-500 employees</option>
-              <option value="501+">501+ employees</option>
-            </select>
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 transition-all duration-300 font-semibold flex items-center justify-center gap-2 shadow-md"
-          >
-            {loading ? (
-              <>
-                <svg
-                  className="animate-spin h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8h8a8 8 0 11-16 0z"
-                  />
-                </svg>
-                Signing Up...
-              </>
-            ) : (
-              "Sign Up"
-            )}
-          </button>
-        </form>
-
-        <div className="relative my-8">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">Or sign up with</span>
+              Log In
+            </Link>
           </div>
         </div>
+      </nav>
 
-        <div className="flex gap-4">
-          <button className="w-full flex items-center justify-center border border-gray-300 py-2.5 rounded-md hover:bg-gray-50 transition-all text-gray-700 font-medium">
-            <FcGoogle className="text-xl mr-2" />
-            Google
-          </button>
-          <button className="w-full flex items-center justify-center border border-gray-300 py-2.5 rounded-md hover:bg-gray-50 transition-all text-gray-700 font-medium">
-            <FaGithub className="text-xl mr-2" />
-            GitHub
-          </button>
+      {/* Main Content */}
+      <div className="flex flex-col items-center justify-center px-4 py-12 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="w-full max-w-lg mb-8 text-center">
+          <h1 className="text-1xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+            Create Your Employer Account
+          </h1>
+          <p className="text-base sm:text-lg text-gray-600 mt-3">
+            Start hiring top talent today
+          </p>
+        </div>
+
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-12 w-full">
+          {/* Form Section */}
+          <div className="bg-white w-full max-w-lg p-6 sm:p-8 rounded-lg border border-gray-200 shadow-sm">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 text-center mb-6">
+              Get Started
+            </h2>
+            <p className="text-center text-sm sm:text-base text-gray-600 mb-6">
+              Already have an account?{" "}
+              <Link to="/employer-login" className="text-[#008080] font-medium">
+                Log In
+              </Link>
+            </p>
+
+            {message && (
+              <div
+                className={`mb-6 px-4 py-3 rounded-md text-sm sm:text-base ${
+                  message.includes("successful")
+                    ? "bg-teal-100 text-teal-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {message}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Name */}
+              <InputWithIcon
+                Icon={FaUser}
+                type="text"
+                name="name"
+                placeholder="Enter your full name"
+                value={formData.name}
+                onChange={handleChange}
+                aria-label="Full Name"
+              />
+
+              {/* Email */}
+              <InputWithIcon
+                Icon={FaEnvelope}
+                type="email"
+                name="email"
+                placeholder="Enter your email address"
+                value={formData.email}
+                onChange={handleChange}
+                aria-label="Email Address"
+              />
+
+              {/* Phone */}
+              <InputWithIcon
+                Icon={FaPhone}
+                type="tel"
+                name="phone"
+                placeholder="Enter your phone number"
+                value={formData.phone}
+                onChange={handleChange}
+                aria-label="Phone Number"
+              />
+
+              {/* Password */}
+              <div className="relative">
+                <FaLock className="absolute top-1/2 left-4 transform -translate-y-1/2 text-[#008080]" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Create a strong password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  minLength={6}
+                  className="w-full pl-12 pr-12 p-4 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#008080]"
+                  required
+                  aria-label="Password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute top-1/2 right-4 transform -translate-y-1/2 text-gray-500"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <FaEyeSlash className="w-5 h-5" /> : <FaEye className="w-5 h-5" />}
+                </button>
+              </div>
+
+              {/* Company Name */}
+              <InputWithIcon
+                Icon={FaBuilding}
+                type="text"
+                name="companyName"
+                placeholder="Enter your company name"
+                value={formData.companyName}
+                onChange={handleChange}
+                aria-label="Company Name"
+              />
+
+              {/* Industry */}
+              <div className="relative">
+                <FaIndustry className="absolute top-1/2 left-4 transform -translate-y-1/2 text-[#008080]" />
+                <input
+                  ref={industryInputRef}
+                  type="text"
+                  name="industry"
+                  placeholder="Enter your industry"
+                  value={formData.industry}
+                  onChange={handleChange}
+                  onFocus={() => setIsIndustryFocused(true)}
+                  onBlur={() => setTimeout(() => setIsIndustryFocused(false), 200)}
+                  className="w-full pl-12 p-4 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#008080]"
+                  required
+                  aria-label="Industry"
+                />
+                {isIndustryFocused && isSearching && (
+                  <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-md shadow-sm mt-1 p-2 z-10">
+                    <p className="text-sm text-gray-600">Searching...</p>
+                  </div>
+                )}
+                {isIndustryFocused && industrySuggestions.length > 0 && !isSearching && (
+                  <div
+                    className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-md shadow-sm mt-1 z-10 max-h-48 overflow-y-auto"
+                    role="listbox"
+                  >
+                    {industrySuggestions.map((suggestion) => (
+                      <div
+                        key={suggestion.id}
+                        className="px-4 py-2 text-sm text-gray-700 cursor-pointer flex justify-between items-center"
+                        onClick={() => handleSelectIndustry(suggestion.name)}
+                        role="option"
+                        aria-selected="false"
+                      >
+                        <span>{suggestion.name}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectIndustry(suggestion.name);
+                          }}
+                          className="text-[#008080] text-xs font-medium"
+                        >
+                          Select
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Company Size */}
+              <div className="relative">
+                <FaUsers className="absolute top-1/2 left-4 transform -translate-y-1/2 text-[#008080]" />
+                <select
+                  name="companySize"
+                  value={formData.companySize}
+                  onChange={handleChange}
+                  className="w-full pl-12 p-4 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#008080]"
+                  required
+                  aria-label="Company Size"
+                >
+                  <option value="">Select company size</option>
+                  <option value="1-10">1-10 Employees</option>
+                  <option value="11-50">11-50 Employees</option>
+                  <option value="51-200">51-200 Employees</option>
+                  <option value="201-500">201-500 Employees</option>
+                  <option value="501+">501+ Employees</option>
+                </select>
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading || !isFormValid()}
+                className={`w-full py-4 text-base sm:text-lg font-semibold text-white rounded-md ${
+                  loading || !isFormValid() ? "bg-gray-400 cursor-not-allowed" : "bg-[#008080]"
+                }`}
+              >
+                {loading ? "Signing Up..." : "Get Started"}
+              </button>
+            </form>
+
+            <p className="text-sm sm:text-base text-gray-600 text-center mt-6">
+              By signing up, you agree to JobLeaaye’s{" "}
+              <a href="/terms" className="text-[#008080] font-medium">
+                Terms & Conditions
+              </a>{" "}
+              and{" "}
+              <a href="/privacy" className="text-[#008080] font-medium">
+                Privacy Policy
+              </a>.
+            </p>
+          </div>
+
+          {/* Promotional */}
+          <div className="w-full max-w-lg mt-6 lg:mt-0">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 text-center lg:text-left">
+              Hire the Best Talent Directly
+            </h2>
+            <p className="text-base sm:text-lg text-gray-600 text-center lg:text-left">
+              Post jobs, connect with top candidates, and build your dream team with JobLeaaye. 🌟
+            </p>
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
+// Reusable input field with icon
+const InputWithIcon = ({ Icon, ...props }) => (
+  <div className="relative">
+    <Icon className="absolute top-1/2 left-4 transform -translate-y-1/2 text-[#008080]" />
+    <input
+      {...props}
+      className="w-full pl-12 p-4 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#008080]"
+      required
+    />
+  </div>
+);
 
 export default EmployerSignup;

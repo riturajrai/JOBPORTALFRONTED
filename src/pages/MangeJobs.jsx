@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Pencil, Trash2, Briefcase, MapPin, DollarSign, Calendar } from "lucide-react";
-import EditJobForm from "./EditJobForm";
 
 const ManageJobs = () => {
   const [jobs, setJobs] = useState([]);
@@ -15,11 +14,11 @@ const ManageJobs = () => {
   const fetchUserJobs = async () => {
     if (!userId) {
       setLoading(false);
-      setError("❌ User not logged in");
+      setError("User not logged in");
       return;
     }
     try {
-      const response = await axios.get(`https://jobportalapi.up.railway.app/api/jobs/user/${userId}`);
+      const response = await axios.get(` http://localhost:5000/api/jobs/user/${userId}`);
       setJobs(response.data);
     } catch (error) {
       console.error("API Error:", error);
@@ -36,7 +35,7 @@ const ManageJobs = () => {
   const handleDelete = async (jobId) => {
     if (!window.confirm("Are you sure you want to delete this job?")) return;
     try {
-      await axios.delete(`https://jobportalapi.up.railway.app/api/jobs/${jobId}`);
+      await axios.delete(` http://localhost:5000/api/jobs/${jobId}`);
       setJobs(jobs.filter((job) => job.id !== jobId));
     } catch (error) {
       console.error("Failed to delete job:", error);

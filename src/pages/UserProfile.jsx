@@ -11,7 +11,7 @@ const EmployerDashboard = () => {
   useEffect(() => {
     const fetchApplication = async () => {
       try {
-        const response = await axios.get(`https://jobportalapi.up.railway.app/api/apply/${id}`);
+        const response = await axios.get(` http://localhost:5000/api/apply/${id}`);
         setApplication(response.data);
       } catch (err) {
         console.error("❌ Error fetching application:", err);
