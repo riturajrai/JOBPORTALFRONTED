@@ -31,7 +31,7 @@ const JobDetails = ({ id }) => { // Accept id prop from DesktopJobs
   const [error, setError] = useState(null);
   const [isFetching, setIsFetching] = useState(true);
 
-  const API_BASE_URL = "http://localhost:5000";
+  const API_BASE_URL = "https://jobporatl.onrender.com";
   const token = localStorage.getItem("token");
   const userId = localStorage.getItem("user_id");
   const role = localStorage.getItem("role");
