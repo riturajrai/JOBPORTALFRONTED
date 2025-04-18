@@ -46,7 +46,7 @@ const MobileJobs = () => {
   const { setIsLoading, setManualLoading } = useLoader();
   const navigate = useNavigate();
   const location = useLocation();
-  const API_BASE_URL = "http://localhost:5000/api";
+  const API_BASE_URL = "https://jobporatl.onrender.com/api";
   const jobsPerLoad = 10;
   const observerRef = useRef(null);
   const MIN_SEARCH_LENGTH = 2;
