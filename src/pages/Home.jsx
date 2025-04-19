@@ -73,7 +73,7 @@ const Home = () => {
     if (name.length > 0) {
       setIsLoading(true);
       try {
-        const response = await axios.get(`https://jobporatl.onrender.com/api/cities?name=${name}`);
+        const response = await axios.get(`http://localhost:5000/api/cities?name=${name}`);
         setCities(response.data.data);
         setShowLocationSuggestions(true);
       } catch (error) {

@@ -509,7 +509,7 @@ const Profile = () => {
 
       try {
         const response = await axios.get(
-          `https://jobporatl.onrender.com/api/users/${storedUserId}`,
+          `http://localhost:5000/api/users/${storedUserId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const userData = {
@@ -612,7 +612,7 @@ const Profile = () => {
 
     try {
       const response = await axios.put(
-        `https://jobporatl.onrender.com/api/users/${storedUserId}`,
+        `http://localhost:5000/api/users/${storedUserId}`,
         uploadData,
         { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" } }
       );
@@ -649,7 +649,7 @@ const Profile = () => {
     if (name.length > 2) {
       setIsLoading(true);
       try {
-        const response = await axios.get(`https://jobporatl.onrender.com/api/cities?name=${name}`);
+        const response = await axios.get(`http://localhost:5000/api/cities?name=${name}`);
         setCities(response.data.data);
       } catch (error) {
         setError("Unable to fetch cities.");

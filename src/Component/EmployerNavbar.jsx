@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import axios from "axios";
 
-const API_BASE_URL = " http://localhost:5000/api";
+const API_BASE_URL = "http://localhost:5000/api";
 
 const EmployerNavbar = () => {
   const [isSideNavOpen, setIsSideNavOpen] = useState(false);
@@ -19,7 +19,6 @@ const EmployerNavbar = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
-
 
   const jobMenuRef = useRef(null);
   const appMenuRef = useRef(null);
@@ -52,10 +51,9 @@ const EmployerNavbar = () => {
     const userId = localStorage.getItem("user_id");
     const storedRole = localStorage.getItem("role");
 
-    // Only show this navbar if the user is an employer
     setIsAuthenticated(!!storedToken && storedRole === "employer");
 
-    if (storedRole !== "employer") return; // Exit early if not employer
+    if (storedRole !== "employer") return;
 
     const fetchNotificationsAndMessages = async () => {
       if (!storedToken || !userId) {
@@ -125,7 +123,7 @@ const EmployerNavbar = () => {
   };
 
   const handleLogout = () => {
-    localStorage.clear()
+    localStorage.clear();
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("user_id");
@@ -135,7 +133,7 @@ const EmployerNavbar = () => {
     setUnreadMessages(0);
     setIsSideNavOpen(false);
     setIsProfileMenuOpen(false);
-    navigate("/employer-login"); // Redirect to employer login
+    navigate("/employer-login");
   };
 
   const handleNavigation = (path) => {
@@ -149,72 +147,75 @@ const EmployerNavbar = () => {
   const isActiveRoute = (route) => location.pathname === route;
   const isAnyRouteActive = (routes) => Object.values(routes).some((route) => isActiveRoute(route));
 
-  if (!isAuthenticated) return null; // Don’t render if not an employer
+  if (!isAuthenticated) return null;
 
   return (
     <>
-      <div className="flex items-center justify-between p-4 bg-[#008080] text-white">
+      {/* Top Bar */}
+      <div className="flex items-center justify-between p-3 sm:p-4 bg-[#008080] text-white">
         <button
           onClick={toggleSideNav}
-          className="menu-toggle p-2 rounded-md focus:outline-none"
+          className="menu-toggle p-1.5 sm:p-2 rounded-md focus:outline-none"
           aria-label="Toggle Side Navbar"
         >
-          <Bars3Icon className="w-6 h-6" />
+          <Bars3Icon className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
 
-        <div className="flex-shrink-0 flex space-x-4">
+        <div className="flex-shrink-0 flex space-x-2 sm:space-x-4">
           <button
             onClick={() => handleNavigation(employerRoutes.notifications)}
-            className={`relative p-2 hover:bg-gray-700 rounded-full transition-colors ${
+            className={`relative p-1.5 sm:p-2 hover:bg-gray-700 rounded-full transition-colors ${
               isActiveRoute(employerRoutes.notifications) ? "bg-gray-300 text-black" : ""
             }`}
             aria-label="Notifications"
           >
-            <BellIcon className="w-6 h-6" />
+            <BellIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             {unreadCount > 0 && (
-              <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {unreadCount}
+              <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
+                {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
           </button>
 
           <button
             onClick={() => handleNavigation(employerRoutes.messages)}
-            className={`relative p-2 hover:bg-gray-700 rounded-full transition-colors ${
+            className={`relative p-1.5 sm:p-2 hover:bg-gray-700 rounded-full transition-colors ${
               isActiveRoute(employerRoutes.messages) ? "bg-gray-300 text-black" : ""
             }`}
             aria-label="Messages"
           >
-            <EnvelopeIcon className="w-6 h-6" />
+            <EnvelopeIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             {unreadMessages > 0 && (
-              <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {unreadMessages}
+              <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
+                {unreadMessages > 9 ? "9+" : unreadMessages}
               </span>
             )}
           </button>
         </div>
       </div>
 
+      {/* Side Navigation */}
       <div
         className={`fixed top-0 left-0 h-full bg-white text-black shadow-md z-50 transform transition-transform duration-300 ease-in-out ${
           isSideNavOpen ? "translate-x-0" : "-translate-x-full"
-        } w-64 side-nav`}
+        } w-64 sm:w-72 side-nav`}
       >
-        <div className="flex items-center justify-between p-4 bg-[#008080] text-white">
+        <div className="flex items-center justify-between p-3 sm:p-4 bg-[#008080] text-white">
           <div className="flex-shrink-0">
-            <Link to="/" className="text-xl font-bold">
+            <Link to="/" className="text-lg sm:text-xl font-semibold">
               JobLeAaye
             </Link>
           </div>
-          <button onClick={toggleSideNav} className="p-2 rounded-md focus:outline-none">
-            <XMarkIcon className="w-6 h-6" />
+          <button onClick={toggleSideNav} className="p-1.5 sm:p-2 rounded-md focus:outline-none">
+            <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
+        
         <nav className="mt-4">
-          <div className="space-y-2">
+          <div className="space-y-1 sm:space-y-2">
             <Link
               to={employerRoutes.dashboard}
-              className={`block hover:bg-gray-200 px-4 py-2 text-base font-medium transition-colors ${
+              className={`block hover:bg-gray-200 px-4 py-2 text-sm sm:text-base font-medium transition-colors ${
                 isActiveRoute(employerRoutes.dashboard) ? "bg-gray-300 text-black" : ""
               }`}
               onClick={() => handleNavigation(employerRoutes.dashboard)}
@@ -222,10 +223,11 @@ const EmployerNavbar = () => {
               Dashboard
             </Link>
 
+            {/* Job Management Menu */}
             <div className="relative" ref={jobMenuRef}>
               <button
                 onClick={toggleJobMenu}
-                className={`w-full text-left hover:bg-gray-200 px-4 py-2 text-base font-medium flex items-center justify-between transition-colors ${
+                className={`w-full text-left hover:bg-gray-200 px-4 py-2 text-sm sm:text-base font-medium flex items-center justify-between transition-colors ${
                   isAnyRouteActive({
                     postJob: employerRoutes.postJob,
                     activeJobs: employerRoutes.activeJobs,
@@ -246,7 +248,7 @@ const EmployerNavbar = () => {
                 <div className="pl-4 space-y-1">
                   <Link
                     to={employerRoutes.postJob}
-                    className={`block px-4 py-2 text-sm hover:bg-gray-200 ${
+                    className={`block px-4 py-2 text-xs sm:text-sm hover:bg-gray-200 ${
                       isActiveRoute(employerRoutes.postJob) ? "bg-gray-300 text-black" : ""
                     }`}
                     onClick={() => handleNavigation(employerRoutes.postJob)}
@@ -255,7 +257,7 @@ const EmployerNavbar = () => {
                   </Link>
                   <Link
                     to={employerRoutes.activeJobs}
-                    className={`block px-4 py-2 text-sm hover:bg-gray-200 ${
+                    className={`block px-4 py-2 text-xs sm:text-sm hover:bg-gray-200 ${
                       isActiveRoute(employerRoutes.activeJobs) ? "bg-gray-300 text-black" : ""
                     }`}
                     onClick={() => handleNavigation(employerRoutes.activeJobs)}
@@ -264,7 +266,7 @@ const EmployerNavbar = () => {
                   </Link>
                   <Link
                     to={employerRoutes.draftJobs}
-                    className={`block px-4 py-2 text-sm hover:bg-gray-200 ${
+                    className={`block px-4 py-2 text-xs sm:text-sm hover:bg-gray-200 ${
                       isActiveRoute(employerRoutes.draftJobs) ? "bg-gray-300 text-black" : ""
                     }`}
                     onClick={() => handleNavigation(employerRoutes.draftJobs)}
@@ -273,7 +275,7 @@ const EmployerNavbar = () => {
                   </Link>
                   <Link
                     to={employerRoutes.closedJobs}
-                    className={`block px-4 py-2 text-sm hover:bg-gray-200 ${
+                    className={`block px-4 py-2 text-xs sm:text-sm hover:bg-gray-200 ${
                       isActiveRoute(employerRoutes.closedJobs) ? "bg-gray-300 text-black" : ""
                     }`}
                     onClick={() => handleNavigation(employerRoutes.closedJobs)}
@@ -282,7 +284,7 @@ const EmployerNavbar = () => {
                   </Link>
                   <Link
                     to={employerRoutes.manageJobs}
-                    className={`block px-4 py-2 text-sm hover:bg-gray-200 ${
+                    className={`block px-4 py-2 text-xs sm:text-sm hover:bg-gray-200 ${
                       isActiveRoute(employerRoutes.manageJobs) ? "bg-gray-300 text-black" : ""
                     }`}
                     onClick={() => handleNavigation(employerRoutes.manageJobs)}
@@ -293,10 +295,11 @@ const EmployerNavbar = () => {
               )}
             </div>
 
+            {/* Applications Menu */}
             <div className="relative" ref={appMenuRef}>
               <button
                 onClick={toggleAppMenu}
-                className={`w-full text-left hover:bg-gray-200 px-4 py-2 text-base font-medium flex items-center justify-between transition-colors ${
+                className={`w-full text-left hover:bg-gray-200 px-4 py-2 text-sm sm:text-base font-medium flex items-center justify-between transition-colors ${
                   isAnyRouteActive({
                     applications: employerRoutes.applications,
                     shortlisted: employerRoutes.shortlisted,
@@ -315,7 +318,7 @@ const EmployerNavbar = () => {
                 <div className="pl-4 space-y-1">
                   <Link
                     to={employerRoutes.applications}
-                    className={`block px-4 py-2 text-sm hover:bg-gray-200 ${
+                    className={`block px-4 py-2 text-xs sm:text-sm hover:bg-gray-200 ${
                       isActiveRoute(employerRoutes.applications) ? "bg-gray-300 text-black" : ""
                     }`}
                     onClick={() => handleNavigation(employerRoutes.applications)}
@@ -324,7 +327,7 @@ const EmployerNavbar = () => {
                   </Link>
                   <Link
                     to={employerRoutes.shortlisted}
-                    className={`block px-4 py-2 text-sm hover:bg-gray-200 ${
+                    className={`block px-4 py-2 text-xs sm:text-sm hover:bg-gray-200 ${
                       isActiveRoute(employerRoutes.shortlisted) ? "bg-gray-300 text-black" : ""
                     }`}
                     onClick={() => handleNavigation(employerRoutes.shortlisted)}
@@ -333,7 +336,7 @@ const EmployerNavbar = () => {
                   </Link>
                   <Link
                     to={employerRoutes.interviews}
-                    className={`block px-4 py-2 text-sm hover:bg-gray-200 ${
+                    className={`block px-4 py-2 text-xs sm:text-sm hover:bg-gray-200 ${
                       isActiveRoute(employerRoutes.interviews) ? "bg-gray-300 text-black" : ""
                     }`}
                     onClick={() => handleNavigation(employerRoutes.interviews)}
@@ -346,7 +349,7 @@ const EmployerNavbar = () => {
 
             <Link
               to={employerRoutes.resumeSearch}
-              className={`block hover:bg-gray-200 px-4 py-2 text-base font-medium transition-colors ${
+              className={`block hover:bg-gray-200 px-4 py-2 text-sm sm:text-base font-medium transition-colors ${
                 isActiveRoute(employerRoutes.resumeSearch) ? "bg-gray-300 text-black" : ""
               }`}
               onClick={() => handleNavigation(employerRoutes.resumeSearch)}
@@ -356,7 +359,7 @@ const EmployerNavbar = () => {
 
             <Link
               to={employerRoutes.analytics}
-              className={`block hover:bg-gray-200 px-4 py-2 text-base font-medium transition-colors ${
+              className={`block hover:bg-gray-200 px-4 py-2 text-sm sm:text-base font-medium transition-colors ${
                 isActiveRoute(employerRoutes.analytics) ? "bg-gray-300 text-black" : ""
               }`}
               onClick={() => handleNavigation(employerRoutes.analytics)}
@@ -366,7 +369,7 @@ const EmployerNavbar = () => {
 
             <Link
               to={employerRoutes.reports}
-              className={`block hover:bg-gray-200 px-4 py-2 text-base font-medium transition-colors ${
+              className={`block hover:bg-gray-200 px-4 py-2 text-sm sm:text-base font-medium transition-colors ${
                 isActiveRoute(employerRoutes.reports) ? "bg-gray-300 text-black" : ""
               }`}
               onClick={() => handleNavigation(employerRoutes.reports)}
@@ -374,10 +377,11 @@ const EmployerNavbar = () => {
               Reports
             </Link>
 
+            {/* Profile Menu */}
             <div className="relative" ref={profileMenuRef}>
               <button
                 onClick={toggleProfileMenu}
-                className={`w-full text-left hover:bg-gray-200 px-4 py-2 text-base font-medium flex items-center justify-between transition-colors ${
+                className={`w-full text-left hover:bg-gray-200 px-4 py-2 text-sm sm:text-base font-medium flex items-center justify-between transition-colors ${
                   isAnyRouteActive({
                     profile: employerRoutes.profile,
                     settings: employerRoutes.settings,
@@ -396,7 +400,7 @@ const EmployerNavbar = () => {
                 <div className="pl-4 space-y-1">
                   <Link
                     to={employerRoutes.profile}
-                    className={`block px-4 py-2 text-sm hover:bg-gray-200 ${
+                    className={`block px-4 py-2 text-xs sm:text-sm hover:bg-gray-200 ${
                       isActiveRoute(employerRoutes.profile) ? "bg-gray-300 text-black" : ""
                     }`}
                     onClick={() => handleNavigation(employerRoutes.profile)}
@@ -405,7 +409,7 @@ const EmployerNavbar = () => {
                   </Link>
                   <Link
                     to={employerRoutes.settings}
-                    className={`block px-4 py-2 text-sm hover:bg-gray-200 ${
+                    className={`block px-4 py-2 text-xs sm:text-sm hover:bg-gray-200 ${
                       isActiveRoute(employerRoutes.settings) ? "bg-gray-300 text-black" : ""
                     }`}
                     onClick={() => handleNavigation(employerRoutes.settings)}
@@ -414,7 +418,7 @@ const EmployerNavbar = () => {
                   </Link>
                   <Link
                     to={employerRoutes.billing}
-                    className={`block px-4 py-2 text-sm hover:bg-gray-200 ${
+                    className={`block px-4 py-2 text-xs sm:text-sm hover:bg-gray-200 ${
                       isActiveRoute(employerRoutes.billing) ? "bg-gray-300 text-black" : ""
                     }`}
                     onClick={() => handleNavigation(employerRoutes.billing)}
@@ -423,7 +427,7 @@ const EmployerNavbar = () => {
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-200"
+                    className="block w-full text-left px-4 py-2 text-xs sm:text-sm text-red-600 hover:bg-gray-200"
                   >
                     Logout
                   </button>

@@ -333,7 +333,7 @@ const JobSeekerDashboard = () => {
               ))}
               <button
                 onClick={() => {
-                  navigate("/");
+                  navigate("/jobs");
                   setManualLoading(true);
                   setTimeout(() => setManualLoading(false), 500);
                 }}
@@ -341,6 +341,17 @@ const JobSeekerDashboard = () => {
               >
                 <MagnifyingGlassIcon className="h-5 w-5" />
                 Find Jobs
+              </button>
+              <button
+                onClick={() => {
+                  navigate("/profile");
+                  setManualLoading(true);
+                  setTimeout(() => setManualLoading(false), 500);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-black bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                <UserIcon className="h-5 w-5" />
+               Profile
               </button>
               <button
                 onClick={() => {

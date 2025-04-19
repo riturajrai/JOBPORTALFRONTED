@@ -69,7 +69,7 @@ const JobDetailsMobile = ({
   const [error, setError] = useState("");
   const [hasNavigated, setHasNavigated] = useState(false); // Prevent infinite navigation
 
-  const API_BASE_URL = "https://jobporatl.onrender.com";
+  const API_BASE_URL = "http://localhost:5000";
   const isDesktop = useMediaQuery("(min-width: 1024px)"); // Aligned with 1024px
   const isMobile = useIsMobile();
   const token = localStorage.getItem("token");

@@ -15,7 +15,7 @@ import { Briefcase, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLoader } from "../pages/LoaderContext";
 
 // Update API_BASE_URL to match your deployed backend
-const API_BASE_URL = "https://jobporatl.onrender.com/api";
+const API_BASE_URL = " http://localhost:5000/api";
 
 class ErrorBoundary extends React.Component {
   state = { hasError: false };

@@ -43,7 +43,7 @@ const JobDetailsPC = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const API_BASE_URL = "https://jobporatl.onrender.com";
+  const API_BASE_URL = " http://localhost:5000";
   useEffect(() => {
     const fetchQuestions = async () => {
       try {

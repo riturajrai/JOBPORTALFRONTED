@@ -84,7 +84,7 @@ const AppContent = () => {
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
-
+  //bottom navbar
   const hideNavbarRoutes = [
     "/signup",
     "/verify-otp",
@@ -92,7 +92,8 @@ const AppContent = () => {
     "/employer-signup",
     "/employer-login",
     "/filters",
-    "/",
+   
+
   ];
 
   const employerRoutes = [
@@ -116,14 +117,15 @@ const AppContent = () => {
     "/employer/messages",
   ];
 
+  // navbar bottom hide feturs
+     // Added /jobs to candidateRoutes
   const candidateRoutes = [
     "/dashboard",
     "/profile",
     "/profile2/:id",
     "/salaries",
     "/notifications",
-    "/resumebuilder",
-    "/jobs", // Added /jobs to candidateRoutes
+  
   ];
 
   // Custom navbar overrides for specific routes

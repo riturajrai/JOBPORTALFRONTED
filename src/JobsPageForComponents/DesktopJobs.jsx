@@ -10,6 +10,15 @@ import { useLoader } from "../pages/LoaderContext";
 import DesktopFilters from "../FilterComponentForMobile.jsx/DesktopFilters";
 import Loader from "../pages/Loader";
 
+// Debounce utility function
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+};
+
 const DesktopJobs = () => {
   const [allJobs, setAllJobs] = useState([]);
   const [displayedJobs, setDisplayedJobs] = useState([]);
@@ -20,9 +29,9 @@ const DesktopJobs = () => {
   const [error, setError] = useState("");
   const [searchTitle, setSearchTitle] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [locationQuery, setLocationQuery] = useState(""); // City search input
-  const [citySuggestions, setCitySuggestions] = useState([]); // City suggestions
-  const [showCitySuggestions, setShowCitySuggestions] = useState(false); // Toggle suggestions
+  const [locationQuery, setLocationQuery] = useState("");
+  const [citySuggestions, setCitySuggestions] = useState([]);
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
   const [filterType, setFilterType] = useState("");
   const [sortSalary, setSortSalary] = useState("");
   const [filterExperience, setFilterExperience] = useState("");
@@ -47,15 +56,42 @@ const DesktopJobs = () => {
   const { setIsLoading, setManualLoading } = useLoader();
   const navigate = useNavigate();
   const location = useLocation();
-  const API_BASE_URL = "https://jobporatl.onrender.com/api";
+  const API_BASE_URL = "http://localhost:5000/api";
   const jobsPerPage = 10;
   const MIN_SEARCH_LENGTH = 0;
+  const DEBOUNCE_DELAY = 300;
 
   const jobsListRef = useRef(null);
   const jobDetailsRef = useRef(null);
+  const titleInputRef = useRef(null);
+
+  // Debounced job title search
+  const debouncedSetSearchTitle = useCallback(
+    debounce((value) => {
+      setSearchTitle(value);
+    }, DEBOUNCE_DELAY),
+    []
+  );
+
+  // Handle job title input change
+  const handleTitleChange = useCallback(
+    (e) => {
+      const value = e.target.value;
+      setSearchTitle(value); // Update immediately for input display
+      debouncedSetSearchTitle(value);
+    },
+    [debouncedSetSearchTitle]
+  );
 
   useEffect(() => {
     const filters = location.state || {};
+    // Set search and location from Home component
+    setSearchTitle(filters.searchQuery || "");
+    setSearchQuery(filters.searchQuery || "");
+    setLocationQuery(filters.cityFilter || filters.locationQuery || "");
+    setCityFilter(filters.cityFilter || filters.locationQuery || "");
+
+    // Set other filters
     setFilterType(filters.filterType || "");
     setFilterExperience(filters.filterExperience || "");
     setWorkLocation(filters.workLocation || "");
@@ -65,12 +101,10 @@ const DesktopJobs = () => {
     setMaxSalary(filters.maxSalary || "");
     setSortSalary(filters.sortSalary || "");
     setSkillsFilter(filters.skillsFilter || "");
-    setCityFilter(filters.cityFilter || "");
     setJobRoleFilter(filters.jobRoleFilter || "");
     setHiringMultipleFilter(filters.hiringMultipleFilter || "");
     setUrgentHiringFilter(filters.urgentHiringFilter || "");
     setJobPriorityFilter(filters.jobPriorityFilter || "");
-    setLocationQuery(filters.cityFilter || ""); // Initialize city search input
   }, [location.state]);
 
   const fetchJobs = async () => {
@@ -125,7 +159,8 @@ const DesktopJobs = () => {
 
   const handleCitySearch = async (e) => {
     const name = e.target.value;
-    setLocationQuery(name); // Update location query
+    setLocationQuery(name);
+    setCityFilter(name); // Update filter immediately
     if (name.length > 0) {
       setIsLoading(true);
       try {
@@ -141,16 +176,16 @@ const DesktopJobs = () => {
     } else {
       setCitySuggestions([]);
       setShowCitySuggestions(false);
-      setCityFilter(""); // Clear filter when input is empty
+      setCityFilter("");
     }
   };
 
   const handleCitySuggestionClick = (city) => {
-    setLocationQuery(city.name); // Use city name
-    setCityFilter(city.name); // Set filter
+    setLocationQuery(city.name);
+    setCityFilter(city.name);
     setCitySuggestions([]);
     setShowCitySuggestions(false);
-    setCurrentPage(1); // Reset to first page
+    setCurrentPage(1);
   };
 
   const handleClearCitySearch = () => {
@@ -197,8 +232,10 @@ const DesktopJobs = () => {
             skills.some((skill) => skill.includes(skillsFilter.toLowerCase()))) &&
           (!cityFilter || city.includes(cityFilter.toLowerCase())) &&
           (!jobRoleFilter || role.includes(jobRoleFilter.toLowerCase())) &&
-          (!hiringMultipleFilter || (hiringMultipleFilter === "yes" ? job.hiring_multiple === 1 : job.hiring_multiple === 0)) &&
-          (!urgentHiringFilter || (urgentHiringFilter === "yes" ? job.urgent_hiring === 1 : job.urgent_hiring === 0)) &&
+          (!hiringMultipleFilter ||
+            (hiringMultipleFilter === "yes" ? job.hiring_multiple === 1 : job.hiring_multiple === 0)) &&
+          (!urgentHiringFilter ||
+            (urgentHiringFilter === "yes" ? job.urgent_hiring === 1 : job.urgent_hiring === 0)) &&
           (!jobPriorityFilter || job.job_priority.toLowerCase() === jobPriorityFilter.toLowerCase())
         );
       });
@@ -218,7 +255,10 @@ const DesktopJobs = () => {
       setDisplayedJobs(newDisplayedJobs);
 
       // Select the top job if none is selected or the current selection is invalid
-      if (newDisplayedJobs.length > 0 && (!selectedJobId || !newDisplayedJobs.some((job) => job.id === selectedJobId))) {
+      if (
+        newDisplayedJobs.length > 0 &&
+        (!selectedJobId || !newDisplayedJobs.some((job) => job.id === selectedJobId))
+      ) {
         setSelectedJobId(newDisplayedJobs[0].id);
         setIsJobDetailsLoading(true);
         setTimeout(() => {
@@ -259,6 +299,7 @@ const DesktopJobs = () => {
     currentPage,
     selectedJobId,
     setManualLoading,
+    parseSalaryRange,
   ]);
 
   useEffect(() => {
@@ -321,6 +362,7 @@ const DesktopJobs = () => {
     setSearchQuery(searchTitle);
     setSuggestions([]);
     setCurrentPage(1);
+    titleInputRef.current?.focus();
   };
 
   const handleKeyPress = (e) => {
@@ -334,6 +376,7 @@ const DesktopJobs = () => {
     setSearchQuery(suggestion);
     setSuggestions([]);
     setCurrentPage(1);
+    titleInputRef.current?.focus();
   };
 
   const handleClearSearch = () => {
@@ -341,6 +384,7 @@ const DesktopJobs = () => {
     setSearchQuery("");
     setSuggestions([]);
     setCurrentPage(1);
+    titleInputRef.current?.focus();
   };
 
   useEffect(() => {
@@ -380,7 +424,7 @@ const DesktopJobs = () => {
   const handleResetFilters = () => {
     setSearchTitle("");
     setSearchQuery("");
-    setLocationQuery(""); // Clear city search
+    setLocationQuery("");
     setCityFilter("");
     setFilterType("");
     setSortSalary("");
@@ -465,6 +509,15 @@ const DesktopJobs = () => {
     }
   };
 
+  const handleMobileNumberSubmit = () => {
+    if (!/^\d{10}$/.test(mobileNumber)) {
+      alert("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    alert(`App link sent to ${mobileNumber}`);
+    setMobileNumber("");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 font-inter flex flex-col hidden md:block">
       <header className="bg-white shadow-md p-2 md:p-3 lg:p-4 sticky top-0 left-0 z-10 border-b border-gray-200 w-full">
@@ -474,10 +527,11 @@ const DesktopJobs = () => {
             <div className="flex items-center gap-2">
               <div className="relative flex-grow">
                 <input
+                  ref={titleInputRef}
                   type="text"
                   placeholder="Search jobs here"
                   value={searchTitle}
-                  onChange={(e) => setSearchTitle(e.target.value)}
+                  onChange={handleTitleChange}
                   onKeyPress={handleKeyPress}
                   className="w-full p-1.5 md:p-2 lg:p-2.5 pl-8 md:pl-9 lg:pl-10 pr-8 md:pr-9 lg:pr-10 border border-gray-300 rounded-l-md bg-white shadow-sm focus:ring-1 focus:ring-[#008080] focus:border-[#008080] text-xs md:text-sm lg:text-base text-gray-500 placeholder-gray-400 outline-none transition-all"
                 />
@@ -488,7 +542,12 @@ const DesktopJobs = () => {
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
                 {searchTitle && (
                   <button
@@ -502,7 +561,12 @@ const DesktopJobs = () => {
                       viewBox="0 0 24 24"
                       xmlns="http://www.w3.org/2000/svg"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 )}
@@ -546,8 +610,18 @@ const DesktopJobs = () => {
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
                 </svg>
                 {locationQuery && (
                   <button
@@ -561,7 +635,12 @@ const DesktopJobs = () => {
                       viewBox="0 0 24 24"
                       xmlns="http://www.w3.org/2000/svg"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 )}
@@ -685,7 +764,9 @@ const DesktopJobs = () => {
                       />
                     </svg>
                   </div>
-                  <p className="text-gray-700 text-xs md:text-sm lg:text-base mb-3 md:mb-4">No jobs match your criteria.</p>
+                  <p className="text-gray-700 text-xs md:text-sm lg:text-base mb-3 md:mb-4">
+                    No jobs match your criteria.
+                  </p>
                 </div>
               )}
             </div>
