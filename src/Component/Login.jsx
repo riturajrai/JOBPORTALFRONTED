@@ -3,7 +3,7 @@ import axios from "axios";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "https://jobporatl.onrender.com/api";
 
 const apiService = {
   login: (data) => axios.post(`${API_BASE_URL}/login`, data, { withCredentials: true }),
