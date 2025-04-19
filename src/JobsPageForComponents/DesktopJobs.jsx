@@ -56,7 +56,7 @@ const DesktopJobs = () => {
   const { setIsLoading, setManualLoading } = useLoader();
   const navigate = useNavigate();
   const location = useLocation();
-  const API_BASE_URL = "http://localhost:5000/api";
+  const API_BASE_URL = "https://jobporatl.onrender.com/api";
   const jobsPerPage = 10;
   const MIN_SEARCH_LENGTH = 0;
   const DEBOUNCE_DELAY = 300;
