@@ -92,6 +92,7 @@ const AppContent = () => {
     "/employer-signup",
     "/employer-login",
     "/filters",
+
    
 
   ];
@@ -121,10 +122,26 @@ const AppContent = () => {
      // Added /jobs to candidateRoutes
   const candidateRoutes = [
     "/dashboard",
-    "/profile",
     "/profile2/:id",
-    "/salaries",
     "/notifications",
+    "/employer-dashboard",
+    "/manage-jobs",
+    "/job-form",
+    "/employeDash",
+    "/employer/post-job",
+    "/employer/active-jobs",
+    "/employer/draft-jobs",
+    "/employer/closed-jobs",
+    "/employer/applications",
+    "/employer/shortlisted",
+    "/employer/interviews",
+    "/employer/resume-search",
+    "/employer/analytics",
+    "/employer/profile",
+    "/employer/settings",
+    "/employer/billing",
+    "/employer/notifications",
+    "/employer/messages",
   
   ];
 
