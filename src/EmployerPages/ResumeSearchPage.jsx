@@ -13,7 +13,7 @@ import axios from "axios";
 import { UserCircle, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLoader } from "../pages/LoaderContext";
 
-const API_BASE_URL = " http://localhost:5000";
+const API_BASE_URL = "https://jobporatl.onrender.com";
 
 class ErrorBoundary extends React.Component {
   state = { hasError: false };
