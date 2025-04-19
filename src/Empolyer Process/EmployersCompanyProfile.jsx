@@ -21,7 +21,7 @@ export default function EmployersCompanyProfile() {
     }
 
     axios
-      .get(` http://localhost:5000/api/companyprofile/${userId}`)
+      .get(`https://jobporatl.onrender.com/api/companyprofile/${userId}`)
       .then((response) => {
         if (Array.isArray(response.data) && response.data.length > 0) {
           setEmployer(response.data[0]);
