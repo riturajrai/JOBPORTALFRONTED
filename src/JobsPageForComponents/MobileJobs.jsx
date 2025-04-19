@@ -10,7 +10,7 @@ import { useLoader } from "../pages/LoaderContext";
 import Loader from "../pages/Loader";
 
 // Constants
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "https://jobporatl.onrender.com/api";
 const JOBS_PER_LOAD = 10;
 const MIN_SEARCH_LENGTH = 0;
 const DEBOUNCE_DELAY = 300;
