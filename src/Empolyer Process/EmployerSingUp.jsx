@@ -51,7 +51,7 @@ const EmployerSignup = () => {
       setIsSearching(true);
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/industry?name=${encodeURIComponent(formData.industry)}`
+          `https://jobporatl.onrender.com/api/industry?name=${encodeURIComponent(formData.industry)}`
         );
 
         const filteredSuggestions = (response.data.data || [])
@@ -98,7 +98,7 @@ const EmployerSignup = () => {
     setMessage("");
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/employer/signup",
+        "https://jobporatl.onrender.com/api/employer/signup",
         formData
       );
       setMessage(response.data.message || "Signup successful! Redirecting...");
