@@ -20,7 +20,7 @@ import JobDetailsPC from "../JobsPageForComponents/JobDetailsPC";
 import React from "react";
 import debounce from "lodash/debounce";
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "https://jobporatl.onrender.com/api";
 
 const JobSeekerDashboard = () => {
   const { setIsLoading, setManualLoading } = useLoader();
