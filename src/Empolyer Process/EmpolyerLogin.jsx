@@ -32,7 +32,7 @@ const EmployerLogin = () => {
     }
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/employer/login",
+        "https://jobporatl.onrender.com/api/employer/login",
         formData,
         { headers: { "Content-Type": "application/json" } }
       );
