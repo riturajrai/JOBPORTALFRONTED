@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Bell, MessageSquare } from "lucide-react";
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "https://jobporatl.onrender.com/api";
 
 const DownArrowIcon = ({ isOpen }) => (
   <svg
