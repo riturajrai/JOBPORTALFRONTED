@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "https://jobporatl.onrender.com/api";
 
 const EmployerNavbar = () => {
   const [isSideNavOpen, setIsSideNavOpen] = useState(false);
